@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>马踏棋盘</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+
+<div id="app">
+    <h1>马踏棋盘</h1>
+
+    <el-row>
+        <el-col :span='4'>
+            请输入行数:
+            <el-input v-model="maxX"></el-input>
+        </el-col>
+        <el-col :span='4'>
+            请输入列数:
+            <el-input v-model="maxY"></el-input>
+        </el-col>
+    </el-row>
+    <el-row>
+        <h1>初始坐标在左上角,下标为 0,0</h1>
+    </el-row>
+    <el-row  :gutter="20">
+
+        <el-col :span='4'>
+            请输初始X位置:
+            <el-input v-model="X"></el-input>
+        </el-col>
+        <el-col :span='4'>
+            请输初始位置:
+            <el-input v-model="Y"></el-input>
+        </el-col>
+        <el-col :span='4' >
+            <el-button type="primary" @click='start()'>开始计算</el-button>
+        </el-col>
+
+    </el-row>
+    <el-card>
+        <div v-for="arr in restlt">
+            <el-tag type="success" v-for="item in arr">{{item}}</el-tag>
+        </div>
+    </el-card>
+</div>
+<script>
+    var vue = new Vue({
+        el: '#app',
+        data: {
+            maxX: 6,
+            maxY: 6,
+            X: 0,
+            Y: 0,
+            finished: false,
+            isVisied: [],
+            restlt:[]
+
+        },
+        methods: {
+            start() {
+                var c = this.getChessBoard();
+                this.isVisied = this.getIsVisied()
+                this.traverseBoard(c, this.Y, this.X, 1)
+                this.restlt = c
+            },
+
+            traverseBoard(chessBoard, row, col, step) {
+                chessBoard[row][col] = step
+                this.isVisied[row][col] = true
+                var p = new Point(col,row)
+                var arrNext = this.getNext(p)
+                this.sortNext(arrNext);
+                while (arrNext.length > 0) {
+                    var temp = arrNext[0]
+                    arrNext.splice(0, 1);
+
+                    if (!this.isVisied[temp.y][temp.x]) {
+                        this.traverseBoard(chessBoard, temp.y, temp.x, step + 1)
+                    }
+                }
+                if (step < (this.maxX * this.maxY) && this.finished === false) {
+                    chessBoard[row][col] = 0
+                    this.isVisied[row][col] = false
+                } else {
+                    this.finished = true;
+                }
+
+
+            },
+            getChessBoard() {
+                var arr = new Array()
+                for (var i = 0; i < this.maxX; i++) {
+                    arr[i] = new Array()
+                    for (var j = 0; j < this.maxY; j++) {
+                        arr[i][j] = 0
+                    }
+                }
+                return arr;
+
+            },
+            getIsVisied() {
+                var arr = new Array()
+                for (var i = 0; i < this.maxX; i++) {
+                    arr[i] = new Array()
+                    for (var j = 0; j < this.maxY; j++) {
+                        arr[i][j] = 0
+                    }
+                }
+                return arr;
+            },
+            getNext(currentPoint) {
+                var p = new Point()
+                var points = new Array()
+                if ((p.x = Number(currentPoint.x) - 2) >= 0 && (p.y = Number(currentPoint.y) - 1) >= 0) {
+
+                    points.push(new Point(p.x,p.y));
+                }
+                if ((p.x = Number(currentPoint.x) - 1) >= 0 && (p.y = Number(currentPoint.y) - 2) >= 0) {
+                    points.push(new Point(p.x,p.y));
+                }
+                //上右
+                if ((p.x = Number(currentPoint.x) + 1) < this.maxX && (p.y = Number(currentPoint.y) - 2) >= 0) {
+                    points.push(new Point(p.x,p.y));
+                }
+                if ((p.x = Number(currentPoint.x) + 2) < this.maxX && (p.y = Number(currentPoint.y) - 1) >= 0) {
+                    points.push(new Point(p.x,p.y));
+                }
+                //判断下半部分是否能够踩踏
+
+                //下左
+                if ((p.x = Number(currentPoint.x) - 2) >= 0 && (p.y = Number(currentPoint.y) + 1) < this.maxY) {
+                    points.push(new Point(p.x,p.y));
+                }
+                if ((p.x = Number(currentPoint.x) - 1) >= 0 && (p.y = Number(currentPoint.y) + 2) < this.maxY) {
+                    points.push(new Point(p.x,p.y));
+                }
+
+                //下右
+                if ((p.x = Number(currentPoint.x) + 2) < this.maxX && (p.y = Number(currentPoint.y) + 1) < this.maxY) {
+                    points.push(new Point(p.x,p.y));
+                }
+                if ((p.x = Number(currentPoint.x) + 1) < this.maxX && (p.y = Number(currentPoint.y) + 2) < this.maxY) {
+                    points.push(new Point(p.x,p.y));
+                }
+                return points
+            },
+            sortNext(arr){
+                var temp;
+                for (let i = 0; i < arr.length-1; i++) {
+                    for (let j = 0; j < arr.length-i-1; j++) {
+                            if (this.getNext(arr[j]).length > this.getNext(arr[j+1]).length){
+                                temp = arr[j]
+                                arr[j] = arr[j+1]
+                                arr[j+1] = temp
+                            }
+                    }
+                }
+            }
+        },
+
+    })
+
+    function Point(x, y){
+
+            this.x = x,
+            this.y = y
+    }
+
+</script>
+<style>
+    .el-tag{
+        width: 60px;
+        height: 60px;
+    }
+</style>
+</body>
+</html>
